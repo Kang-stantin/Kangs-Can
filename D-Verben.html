@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>D-Verben</title>
+<style>
+body{margin:0;padding:18px 16px;background:#fff;color:#000;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:420px;margin:0 auto;}
+h1{font-size:22px;font-weight:700;margin:0 0 2px;letter-spacing:1px;}
+.sub{font-size:12px;color:#666;font-weight:400;}
+.score{font-size:14px;color:#333;margin:6px 0 16px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;width:96px;font-size:15px;font-weight:500;padding:7px 0;vertical-align:middle;white-space:nowrap;}
+td{padding:7px 0;}
+input{width:100%;box-sizing:border-box;font-size:17px;padding:11px 10px;
+border:1px solid #888;border-radius:6px;background:#fff;color:#000;}
+input:disabled{background:#ececec;color:#000;}
+.row{display:flex;align-items:center;gap:8px;}
+.row input{flex:1;}
+.aux{display:flex;gap:4px;}
+.aux button{flex:none;width:40px;padding:11px 0;font-size:15px;border-radius:6px;}
+.aux button.sel{background:#222;color:#fff;border-color:#222;}
+.aux button.ok{background:#1B7F3B;border-color:#1B7F3B;color:#fff;}
+.aux button.bad{background:#C62828;border-color:#C62828;color:#fff;}
+.btns{display:flex;gap:10px;margin-top:16px;}
+button{flex:1;font-size:17px;padding:13px;border:1px solid #222;background:#fff;color:#000;border-radius:6px;}
+button:active{background:#e6e6e6;}
+.meaning{margin-top:14px;font-size:15px;min-height:24px;line-height:1.5;}
+.hint{margin-top:22px;font-size:12px;color:#777;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>D-Verben</h1>
+  <div class="hint" style="margin:0 0 2px;">德语<b>不规则</b>动词变位 · 171 词</div>
+  <div class="score" id="score">0 / 0</div>
+  <table>
+    <tr><th>原型</th><td><input id="f0" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></td></tr>
+    <tr><th>过去式 <span class="sub">er</span></th><td><input id="f1" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></td></tr>
+    <tr><th>二分词</th><td><div class="row"><input id="f2" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="aux"><button id="ah" type="button" title="haben">h</button><button id="as" type="button" title="sein">s</button></div></div></td></tr>
+  </table>
+  <div class="btns">
+    <button id="check" type="button">检查</button>
+    <button id="next" type="button">下一个</button>
+  </div>
+  <div class="meaning" id="meaning"></div>
+  <div class="hint">只含强变化与混合变化动词（含 sein / haben / werden 与情态动词）；规则动词按公式可推导，未收录。<br>变元音按 ae / oe / ue / ss 拼写（如 heissen、koennen、schliessen）。<br>可分动词的过去式前缀在词末，如 fing an、stand auf。<br>二分词右侧 <b>h / s</b> 选完成时助动词：<b>h</b> = haben，<b>s</b> = sein（位移与状态变化用 sein）。</div>
+</div>
+<script>
+var VERBS = [["sein", "war", "gewesen", "s"], ["haben", "hatte", "gehabt", "h"], ["werden", "wurde", "geworden", "s"], ["koennen", "konnte", "gekonnt", "h"], ["muessen", "musste", "gemusst", "h"], ["wollen", "wollte", "gewollt", "h"], ["sollen", "sollte", "gesollt", "h"], ["duerfen", "durfte", "gedurft", "h"], ["moegen", "mochte", "gemocht", "h"], ["wissen", "wusste", "gewusst", "h"], ["gehen", "ging", "gegangen", "s"], ["kommen", "kam", "gekommen", "s"], ["bleiben", "blieb", "geblieben", "s"], ["lassen", "liess", "gelassen", "h"], ["halten", "hielt", "gehalten", "h"], ["fahren", "fuhr", "gefahren", "s"], ["tragen", "trug", "getragen", "h"], ["waschen", "wusch", "gewaschen", "h"], ["schlafen", "schlief", "geschlafen", "h"], ["fallen", "fiel", "gefallen", "s"], ["sprechen", "sprach", "gesprochen", "h"], ["sehen", "sah", "gesehen", "h"], ["lesen", "las", "gelesen", "h"], ["schreiben", "schrieb", "geschrieben", "h"], ["fliegen", "flog", "geflogen", "s"], ["fliessen", "floss", "geflossen", "s"], ["ziehen", "zog", "gezogen", "h"], ["stehen", "stand", "gestanden", "h"], ["liegen", "lag", "gelegen", "h"], ["sitzen", "sass", "gesessen", "h"], ["geben", "gab", "gegeben", "h"], ["nehmen", "nahm", "genommen", "h"], ["bringen", "brachte", "gebracht", "h"], ["denken", "dachte", "gedacht", "h"], ["kennen", "kannte", "gekannt", "h"], ["nennen", "nannte", "genannt", "h"], ["rennen", "rannte", "gerannt", "s"], ["finden", "fand", "gefunden", "h"], ["verstehen", "verstand", "verstanden", "h"], ["beginnen", "begann", "begonnen", "h"], ["gewinnen", "gewann", "gewonnen", "h"], ["verlieren", "verlor", "verloren", "h"], ["brechen", "brach", "gebrochen", "h"], ["sterben", "starb", "gestorben", "s"], ["werfen", "warf", "geworfen", "h"], ["treffen", "traf", "getroffen", "h"], ["helfen", "half", "geholfen", "h"], ["essen", "ass", "gegessen", "h"], ["trinken", "trank", "getrunken", "h"], ["fressen", "frass", "gefressen", "h"], ["singen", "sang", "gesungen", "h"], ["schwimmen", "schwamm", "geschwommen", "s"], ["springen", "sprang", "gesprungen", "s"], ["sinken", "sank", "gesunken", "s"], ["schliessen", "schloss", "geschlossen", "h"], ["schreien", "schrie", "geschrien", "h"], ["scheinen", "schien", "geschienen", "h"], ["leihen", "lieh", "geliehen", "h"], ["schweigen", "schwieg", "geschwiegen", "h"], ["steigen", "stieg", "gestiegen", "s"], ["stehlen", "stahl", "gestohlen", "h"], ["empfehlen", "empfahl", "empfohlen", "h"], ["verzeihen", "verzieh", "verziehen", "h"], ["gedeihen", "gedieh", "gediehen", "s"], ["binden", "band", "gebunden", "h"], ["schwinden", "schwand", "geschwunden", "s"], ["schwingen", "schwang", "geschwungen", "h"], ["klingen", "klang", "geklungen", "h"], ["dringen", "drang", "gedrungen", "s"], ["ringen", "rang", "gerungen", "h"], ["beissen", "biss", "gebissen", "h"], ["greifen", "griff", "gegriffen", "h"], ["leiden", "litt", "gelitten", "h"], ["schneiden", "schnitt", "geschnitten", "h"], ["schreiten", "schritt", "geschritten", "s"], ["streiten", "stritt", "gestritten", "h"], ["gleiten", "glitt", "geglitten", "s"], ["reiten", "ritt", "geritten", "s"], ["kneifen", "kniff", "gekniffen", "h"], ["pfeifen", "pfiff", "gepfiffen", "h"], ["gelten", "galt", "gegolten", "h"], ["schelten", "schalt", "gescholten", "h"], ["vergessen", "vergass", "vergessen", "h"], ["messen", "mass", "gemessen", "h"], ["biegen", "bog", "gebogen", "h"], ["bieten", "bot", "geboten", "h"], ["frieren", "fror", "gefroren", "h"], ["geniessen", "genoss", "genossen", "h"], ["wiegen", "wog", "gewogen", "h"], ["kriechen", "kroch", "gekrochen", "s"], ["backen", "buk", "gebacken", "h"], ["fangen", "fing", "gefangen", "h"], ["haengen", "hing", "gehangen", "h"], ["schlagen", "schlug", "geschlagen", "h"], ["wachsen", "wuchs", "gewachsen", "s"], ["laden", "lud", "geladen", "h"], ["brennen", "brannte", "gebrannt", "h"], ["senden", "sandte", "gesandt", "h"], ["wenden", "wandte", "gewandt", "h"], ["erhalten", "erhielt", "erhalten", "h"], ["erkennen", "erkannte", "erkannt", "h"], ["erschrecken", "erschrak", "erschrocken", "s"], ["erzwingen", "erzwang", "erzwungen", "h"], ["verbieten", "verbot", "verboten", "h"], ["verlassen", "verliess", "verlassen", "h"], ["vermeiden", "vermied", "vermieden", "h"], ["versprechen", "versprach", "versprochen", "h"], ["entstehen", "entstand", "entstanden", "s"], ["bekommen", "bekam", "bekommen", "h"], ["besitzen", "besass", "besessen", "h"], ["bewegen", "bewog", "bewogen", "h"], ["betreten", "betrat", "betreten", "h"], ["anfangen", "fing an", "angefangen", "h"], ["aufstehen", "stand auf", "aufgestanden", "s"], ["aussehen", "sah aus", "ausgesehen", "h"], ["eingehen", "ging ein", "eingegangen", "s"], ["umgehen", "ging um", "umgegangen", "s"], ["abfahren", "fuhr ab", "abgefahren", "s"], ["abnehmen", "nahm ab", "abgenommen", "h"], ["ansehen", "sah an", "angesehen", "h"], ["zurueckkommen", "kam zurueck", "zurueckgekommen", "s"], ["mitkommen", "kam mit", "mitgekommen", "s"], ["zunehmen", "nahm zu", "zugenommen", "h"], ["abgeben", "gab ab", "abgegeben", "h"], ["anrufen", "rief an", "angerufen", "h"], ["aufgeben", "gab auf", "aufgegeben", "h"], ["ausgehen", "ging aus", "ausgegangen", "s"], ["einladen", "lud ein", "eingeladen", "h"], ["fernsehen", "sah fern", "ferngesehen", "h"], ["zusammenhaengen", "hing zusammen", "zusammengehangen", "h"], ["festhalten", "hielt fest", "festgehalten", "h"], ["schaffen", "schuf", "geschaffen", "h"], ["entscheiden", "entschied", "entschieden", "h"], ["laufen", "lief", "gelaufen", "s"], ["rufen", "rief", "gerufen", "h"], ["tun", "tat", "getan", "h"], ["heissen", "hiess", "geheissen", "h"], ["bitten", "bat", "gebeten", "h"], ["geschehen", "geschah", "geschehen", "s"], ["gelingen", "gelang", "gelungen", "s"], ["graben", "grub", "gegraben", "h"], ["heben", "hob", "gehoben", "h"], ["raten", "riet", "geraten", "h"], ["riechen", "roch", "gerochen", "h"], ["treiben", "trieb", "getrieben", "h"], ["fliehen", "floh", "geflohen", "s"], ["schieben", "schob", "geschoben", "h"], ["schiessen", "schoss", "geschossen", "h"], ["stossen", "stiess", "gestossen", "h"], ["luegen", "log", "gelogen", "h"], ["meiden", "mied", "gemieden", "h"], ["verderben", "verdarb", "verdorben", "s"], ["zwingen", "zwang", "gezwungen", "h"], ["braten", "briet", "gebraten", "h"], ["schmelzen", "schmolz", "geschmolzen", "s"], ["blasen", "blies", "geblasen", "h"], ["giessen", "goss", "gegossen", "h"], ["weisen", "wies", "gewiesen", "h"], ["werben", "warb", "geworben", "h"], ["stechen", "stach", "gestochen", "h"], ["stinken", "stank", "gestunken", "h"], ["streichen", "strich", "gestrichen", "h"], ["schleichen", "schlich", "geschlichen", "s"], ["befehlen", "befahl", "befohlen", "h"], ["empfangen", "empfing", "empfangen", "h"], ["verbergen", "verbarg", "verborgen", "h"], ["erscheinen", "erschien", "erschienen", "s"], ["verschwinden", "verschwand", "verschwunden", "s"], ["beweisen", "bewies", "bewiesen", "h"], ["stattfinden", "fand statt", "stattgefunden", "h"], ["anziehen", "zog an", "angezogen", "h"]];
+var MEANINGS = ["是；存在", "有；拥有", "变成；成为", "能；会", "必须；不得不", "想要；愿意", "应该；应当", "允许；可以", "喜欢；想", "知道；了解", "走；去", "来；到达", "停留；保持", "让；留下", "拿；保持", "开；行驶", "携带；穿", "洗", "睡", "落下；跌倒", "说话；讲话", "看见；观看", "读；阅读", "写；书写", "飞；飞行", "流；流淌", "拉；搬", "站；站立", "躺；位于", "坐", "给；给予", "拿；取", "带来；带", "想；思考", "认识；熟悉", "命名；称作", "跑；奔跑", "找到；发现", "理解；懂", "开始", "赢；获胜", "失去；输", "打破；折断", "死；去世", "扔；抛", "遇见；击中", "帮助", "吃", "喝", "吃(兽)", "唱", "游泳", "跳；蹦", "下沉；降低", "关闭；关", "喊；叫", "照耀；似乎", "借出", "沉默", "爬；上升", "偷", "推荐；建议", "原谅", "繁荣；成功", "绑；捆", "减少；消失", "挥动；摆动", "响；听起来", "挤入；穿透", "挣扎；争取", "咬", "抓；握", "遭受；忍受", "切；剪", "迈步；进展", "争吵；争论", "滑；滑行", "骑马", "捏；夹", "吹口哨", "有效；适用", "责骂", "忘记", "测量", "弯曲", "提供；出价", "冻结；寒冷", "享受；喜爱", "称重；重", "爬行", "烤", "抓；捉", "挂(物)", "打；敲", "生长；增长", "装载；充电", "燃烧", "发送；寄", "转向；翻", "获得；保持", "认出；识别", "惊吓", "迫使", "禁止", "离开；抛弃", "避免", "承诺；说", "产生；出现", "得到；收到", "拥有", "促使；移动", "进入；踏", "开始；着手", "起床；站起", "看起来", "进入；协定", "绕行；对待", "出发；驶离", "减轻；取下", "观看；看待", "回来", "一起来", "增加；增重", "交出；散发", "打电话", "放弃；交出", "外出；得出", "邀请", "看电视", "关联；有关", "握住；坚持", "创造；完成", "决定；裁决", "跑；跑步", "喊；叫", "做；干", "名叫；称作", "请求；恳求", "发生", "成功", "挖；掘", "举起；提高", "建议；猜测", "闻；嗅", "驱赶；推动", "逃跑；逃避", "推；挪动", "射击；射门", "推；碰撞", "说谎", "避开；避免", "腐坏；败坏", "强迫；迫使", "烤；煎", "融化", "吹", "倒；浇", "指示；指引", "争取；招募", "刺；扎", "发臭", "涂；划掉", "潜行；溜走", "命令；吩咐", "接待；接收", "隐藏；掩盖", "出现；出版", "消失", "证明", "举行；发生", "穿上；吸引"];
+var fields = [document.getElementById('f0'), document.getElementById('f1'), document.getElementById('f2')];
+var scoreEl = document.getElementById('score');
+var meanEl = document.getElementById('meaning');
+var auxBtns = { h: document.getElementById('ah'), s: document.getElementById('as') };
+var cur = null, ci = 0, gi = 0, score = 0, total = 0, auxSel = null;
+
+function setScore(){ scoreEl.textContent = score + ' / ' + total; }
+
+function setAux(k){
+  auxSel = k;
+  auxBtns.h.className = (k === 'h') ? 'sel' : '';
+  auxBtns.s.className = (k === 's') ? 'sel' : '';
+}
+
+function next(){
+  ci = Math.floor(Math.random() * VERBS.length);
+  cur = VERBS[ci];
+  gi = Math.floor(Math.random() * 3);
+  for (var i = 0; i < 3; i++){
+    var f = fields[i];
+    f.disabled = false;
+    f.value = '';
+    f.placeholder = '?';
+    f.style.background = '#fff';
+    f.style.color = '#000';
+    if (i === gi){
+      f.value = cur[i];
+      f.disabled = true;
+      f.style.background = '#ececec';
+    }
+  }
+  setAux(null);
+  meanEl.textContent = '';
+}
+
+function reveal(i){
+  var f = fields[i];
+  f.value = cur[i];
+  f.style.color = '#C62828';
+}
+
+function check(){
+  var all = true, wrong = 0;
+  for (var i = 0; i < 3; i++){
+    if (i === gi) continue;
+    var f = fields[i];
+    var v = (f.value || '').trim();
+    if (v === ''){ all = false; wrong++; reveal(i); continue; }
+    if (v.toLowerCase() === cur[i].toLowerCase()){
+      f.style.color = '#1B7F3B';
+    } else {
+      all = false; wrong++; reveal(i);
+    }
+  }
+  auxBtns.h.className = '';
+  auxBtns.s.className = '';
+  var auxOk = (auxSel === cur[3]);
+  auxBtns[cur[3]].className = 'ok';
+  if (auxSel && !auxOk) auxBtns[auxSel].className = 'bad';
+  if (!auxOk){ all = false; wrong++; }
+  total++;
+  if (all) score++;
+  setScore();
+  meanEl.textContent = '常见含义：' + MEANINGS[ci];
+}
+
+document.getElementById('check').addEventListener('click', check);
+document.getElementById('next').addEventListener('click', next);
+auxBtns.h.addEventListener('click', function(){ setAux('h'); });
+auxBtns.s.addEventListener('click', function(){ setAux('s'); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Enter') check(); });
+setScore();
+next();
+</script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英语介词 at / on / in 搭配背诵</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fff; color: #111;
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 18px 16px 60px; }
+  h1 { font-size: 20px; text-align: center; margin: 4px 0 2px; }
+  .sub { text-align: center; font-size: 13px; color: #555; margin-bottom: 14px; }
+  .card {
+    border: 2px solid #111; border-radius: 10px; padding: 22px 16px;
+    text-align: center; background: #fff;
+  }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .chip { font-size: 12px; font-weight: 700; border: 1.5px solid #111; border-radius: 12px; padding: 2px 10px; }
+  .progress { font-size: 13px; color: #555; }
+  .label { font-size: 13px; color: #888; margin-bottom: 6px; }
+  .phrase { font-size: 25px; font-weight: 700; display: flex; justify-content: center;
+            align-items: center; flex-wrap: wrap; gap: 2px; }
+  .phrase .trunk { white-space: pre; }
+  #ans {
+    width: 3.4em; font-size: 23px; text-align: center; font-weight: 700;
+    border: 2px solid #333; border-radius: 6px; padding: 2px 4px; outline: none;
+    color: #111; background: #fff;
+  }
+  #ans.ok { border-color: #1B7F3B; color: #1B7F3B; background: #eaf7ee; }
+  #ans.bad { border-color: #C0392B; color: #C0392B; background: #fdecea; }
+  #ans:disabled { background: #f2f2f2; }
+  .status { min-height: 22px; margin-top: 12px; font-size: 15px; font-weight: 700; }
+  .status.ok { color: #1B7F3B; }
+  .status.bad { color: #C0392B; }
+  #meaning {
+    display: none; margin-top: 10px; padding: 10px 12px; font-size: 15px;
+    background: #f4f4f4; border-radius: 8px; color: #222; text-align: left;
+  }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border: 2px solid #111; border-radius: 8px; background: #fff; color: #111;
+    padding: 10px 16px;
+  }
+  button:active { background: #111; color: #fff; }
+  button.primary { background: #111; color: #fff; }
+  .wrong { margin-top: 26px; }
+  .wrong h2 { font-size: 16px; border-bottom: 2px solid #111; padding-bottom: 6px; }
+  .wrong .hint { font-size: 12px; color: #666; margin: 6px 0 10px; }
+  #wrongList .empty { color: #1B7F3B; font-weight: 700; padding: 8px 0; }
+  .witem {
+    display: grid; grid-template-columns: 30px 1fr; gap: 4px 10px;
+    align-items: center; border: 1px solid #ddd; border-radius: 8px;
+    padding: 8px 10px; margin-bottom: 8px; cursor: pointer; background: #fff;
+  }
+  .witem:hover { border-color: #111; background: #fafafa; }
+  .wi-no { font-weight: 700; color: #C0392B; }
+  .wi-ph { font-weight: 700; }
+  .wi-ph .blank { color: #C0392B; font-weight: 700; }
+  .wi-mn { grid-column: 2 / 3; font-size: 13px; color: #555; }
+  .practice-banner {
+    display: none; font-size: 13px; font-weight: 700; color: #C0392B;
+    border: 1.5px dashed #C0392B; border-radius: 8px; padding: 6px 10px; margin-bottom: 12px;
+  }
+  #toast {
+    display: none; position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: #111; color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 14px;
+    z-index: 99;
+  }
+  .foot { text-align: center; font-size: 12px; color: #888; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>英语介词 at / on / in 搭配背诵</h1>
+  <div class="sub">顺序考察（各类别已混排）· 挖空介词 · 填后揭示含义 · 进度可保存</div>
+
+  <div class="card">
+    <div class="topbar">
+      <span class="chip" id="chip">搭配</span>
+      <span class="progress" id="progress"></span>
+    </div>
+    <div class="practice-banner" id="practiceBanner"></div>
+    <div class="label">在空白处填入介词（at / on / in）：</div>
+    <div class="phrase">
+      <span class="trunk" id="before"></span>
+      <input id="ans" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <span class="trunk" id="after"></span>
+    </div>
+    <div class="status" id="status"></div>
+    <div id="meaning"></div>
+    <div class="btns">
+      <button id="prev">上一个</button>
+      <button id="check" class="primary">检查</button>
+      <button id="next">下一个</button>
+      <button id="save">保存进度</button>
+      <button id="practiceBack" style="display:none;">← 返回错题本</button>
+    </div>
+  </div>
+
+  <div class="wrong">
+    <h2>错题本</h2>
+    <div class="hint">点任意一条进入错题练习（答案已用 ___ 隐藏）；「练习全部错题」按顺序过一遍；答对即移除。下面按钮可清空。</div>
+    <div id="wrongList"></div>
+    <div class="btns" style="margin-top:6px;">
+      <button id="practiceAll">练习全部错题</button>
+      <button id="clearWrong">清空错题本</button>
+      <button id="goStart">回到开头</button>
+    </div>
+  </div>
+
+  <div class="foot">共 <span id="total"></span> 条 · 数据存于本机浏览器，关掉重开自动续上</div>
+</div>
+<div id="toast"></div>
+
+<script>
+const DATA = [["地点", "on the right", "on", "在右边"], ["地点", "in the room", "in", "在房间里"], ["搭配", "rely on", "on", "依靠"], ["地点", "on the table", "on", "在桌上"], ["地点", "on TV", "on", "在电视上"], ["时间", "on the morning of May 1st", "on", "在五月一日的早上（具体某天的上午）"], ["地点", "at the corner", "at", "在街角（那个点；对比 in the corner）"], ["时间", "at the moment", "at", "此刻；当时"], ["地点", "in Beijing", "in", "在北京"], ["搭配", "be good at", "at", "擅长"], ["搭配", "in English", "in", "用英语"], ["搭配", "on holiday", "on", "在度假"], ["时间", "on Monday", "on", "在星期一（具体某天）"], ["搭配", "result in", "in", "导致"], ["时间", "at the same time", "at", "同时"], ["搭配", "at a price of", "at", "以……的价格"], ["地点", "at home", "at", "在家"], ["搭配", "succeed in", "in", "在……方面成功"], ["地点", "at the airport", "at", "在机场"], ["搭配", "be bad at", "at", "不擅长"], ["时间", "at noon", "at", "在中午"], ["地点", "in China", "in", "在中国"], ["地点", "at the party", "at", "在聚会上"], ["地点", "in Asia", "in", "在亚洲"], ["时间", "in the past", "in", "在过去"], ["地点", "on the plane", "on", "在飞机上"], ["地点", "in the building", "in", "在大楼里"], ["时间", "in winter", "in", "在冬天"], ["时间", "in the morning", "in", "在早上（有 the；对比 at night）"], ["时间", "at the age of", "at", "在……岁时"], ["地点", "on the ceiling", "on", "在天花板上"], ["地点", "at work", "at", "在上班"], ["时间", "in the future", "in", "在将来"], ["搭配", "be clever at", "at", "善于"], ["搭配", "in danger", "in", "处于危险中"], ["时间", "at last", "at", "终于"], ["地点", "on the Internet", "on", "在互联网上"], ["地点", "in the world", "in", "在世界上"], ["时间", "in 2024", "in", "在 2024 年"], ["搭配", "on sale", "on", "在售；打折"], ["地点", "at the end of", "at", "在……末尾"], ["地点", "on the wall", "on", "在墙上"], ["搭配", "arrive at", "at", "到达（小地点；对比 arrive in）"], ["地点", "on the bus", "on", "在公交车上（大交通工具表面；对比 in the car）"], ["时间", "at 6 o'clock", "at", "在六点（具体时刻）"], ["地点", "at school", "at", "在上学（抽象，非指建筑）"], ["搭配", "spend...on", "on", "在……上花费"], ["搭配", "in addition to", "in", "除了……之外（还）"], ["地点", "in the corner", "in", "在房间角落内部（对比 at/on the corner）"], ["搭配", "in the end", "in", "最终"], ["搭配", "in advance", "in", "提前"], ["搭配", "believe in", "in", "相信；信奉"], ["时间", "at night", "at", "在夜里（固定搭配，无 the）"], ["搭配", "on average", "on", "平均"], ["易混", "on the weekend", "on", "在周末（美式；对比 at the weekend 英式）"], ["搭配", "at all", "at", "根本（常用于否定句）"], ["地点", "on the left", "on", "在左边"], ["搭配", "depend on", "on", "依赖"], ["搭配", "on foot", "on", "步行"], ["搭配", "laugh at", "at", "嘲笑"], ["时间", "in the 1990s", "in", "在 20 世纪 90 年代"], ["时间", "at once", "at", "立刻；马上"], ["地点", "at the bottom of", "at", "在……底部"], ["搭配", "insist on", "on", "坚持"], ["地点", "in the sea", "in", "在海里"], ["地点", "on the phone", "on", "在打电话"], ["时间", "on my birthday", "on", "在我生日那天"], ["时间", "in May", "in", "在五月"], ["时间", "at Christmas", "at", "在圣诞节（节日整体）"], ["搭配", "look at", "at", "看"], ["地点", "in the box", "in", "在盒子里"], ["搭配", "in trouble", "in", "处于麻烦中"], ["地点", "in the car", "in", "在小汽车里（内部；对比 on the bus）"], ["地点", "at the door", "at", "在门口"], ["易混", "arrive in", "in", "到达（大地点如城市/国家；对比 arrive at）"], ["地点", "in the center of", "in", "在……中心"], ["搭配", "in detail", "in", "详细地"], ["地点", "at the bus stop", "at", "在公交车站"], ["搭配", "interested in", "in", "对……感兴趣"], ["地点", "on the train", "on", "在火车上"], ["时间", "at Easter", "at", "在复活节"], ["易混", "in the school", "in", "在学校建筑里（对比 at school 在校上学）"], ["搭配", "at a speed of", "at", "以……的速度"], ["时间", "on weekdays", "on", "在工作日"], ["地点", "on the floor", "on", "在地板上"], ["搭配", "shout at", "at", "对……大喊"], ["搭配", "at most", "at", "至多"], ["时间", "in the afternoon", "in", "在下午"], ["搭配", "on business", "on", "出差"], ["地点", "on the corner", "on", "在街角表面（对比 at/in the corner）"], ["搭配", "on purpose", "on", "故意"], ["易混", "at the weekend", "at", "在周末（英式；对比 on the weekend 美式）"], ["地点", "at the station", "at", "在车站"], ["搭配", "in fact", "in", "事实上"], ["地点", "on the way to", "on", "在去……的路上"], ["时间", "on time", "on", "准时（对比 in time 及时）"], ["时间", "in summer", "in", "在夏天"], ["搭配", "on display", "on", "在展出"], ["搭配", "in order to", "in", "为了"], ["搭配", "on show", "on", "在展示"], ["时间", "on weekends", "on", "在周末（英式；美式用 on the weekend）"], ["时间", "at least", "at", "至少"], ["搭配", "on behalf of", "on", "代表"], ["搭配", "in cash", "in", "用现金"], ["地点", "in the sky", "in", "在天空中"], ["时间", "at present", "at", "目前"], ["搭配", "in general", "in", "总的来说"], ["搭配", "focus on", "on", "专注于"], ["地点", "at the top of", "at", "在……顶部"], ["时间", "at midnight", "at", "在午夜"], ["时间", "in time", "in", "及时（对比 on time 准时）"], ["时间", "on July 1st", "on", "在七月一日"], ["时间", "at first", "at", "起初"], ["地点", "in the middle of", "in", "在……中间"], ["地点", "at the meeting", "at", "在会议上"], ["时间", "in the evening", "in", "在晚上"]];
+const N = DATA.length;
+const KEY = 'prep_quiz_progress_v1';
+let idx = 0;
+let wrong = new Set();
+let checked = false;
+let inPractice = false;
+let practiceQueue = [];
+
+const $ = id => document.getElementById(id);
+
+function splitPhrase(full, prep){
+  const re = new RegExp('\\b(' + prep + ')\\b');
+  const m = full.match(re);
+  if(!m) return {before: full, after: ''};
+  return {before: full.slice(0, m.index), after: full.slice(m.index + prep.length)};
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function maskPhrase(full, prep){
+  const safe = prep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('\\b(' + safe + ')\\b');
+  return full.replace(re, '___');
+}
+
+function render(){
+  const d = DATA[idx];
+  const sp = splitPhrase(d[1], d[2]);
+  $('before').textContent = sp.before;
+  $('after').textContent = sp.after;
+  const a = $('ans');
+  a.value = '';
+  a.className = '';
+  a.disabled = false;
+  $('chip').textContent = d[0];
+  $('progress').textContent = '第 ' + (idx + 1) + ' / ' + N + ' 条';
+  $('status').textContent = '';
+  $('status').className = 'status';
+  const mn = $('meaning');
+  mn.style.display = 'none';
+  mn.textContent = '含义：' + d[3];
+  checked = false;
+  if(inPractice){
+    $('practiceBanner').style.display = 'block';
+    $('practiceBanner').textContent = '错题练习 · 剩余 ' + practiceQueue.length + ' 题';
+    $('practiceBack').style.display = '';
+    $('prev').style.display = 'none';
+    $('next').style.display = 'none';
+    $('save').style.display = 'none';
+  } else {
+    $('practiceBanner').style.display = 'none';
+    $('practiceBack').style.display = 'none';
+    $('prev').style.display = '';
+    $('next').style.display = '';
+    $('save').style.display = '';
+  }
+  a.focus();
+}
+
+function check(){
+  const d = DATA[idx];
+  const v = $('ans').value.trim().toLowerCase();
+  checked = true;
+  const a = $('ans');
+  if(v === d[2]){
+    a.className = 'ok';
+    $('status').textContent = '✓ 正确';
+    $('status').className = 'status ok';
+    if(wrong.has(idx)){
+      wrong.delete(idx);
+      saveSilent();
+      renderWrong();
+      if(inPractice){
+        toast('✓ 已从错题本移除');
+        practiceAfterCorrect();
+        return;
+      }
+    }
+  } else {
+    a.className = 'bad';
+    $('status').textContent = '✗ 正确应为：' + d[2];
+    $('status').className = 'status bad';
+    if(!wrong.has(idx)){
+      wrong.add(idx);
+      saveSilent();
+      renderWrong();
+    }
+  }
+  $('meaning').style.display = 'block';
+}
+
+function prev(){
+  idx = (idx - 1 + N) % N;
+  render();
+}
+
+function next(){
+  if(idx === N - 1){
+    toast('本轮完成，已从开头重新开始');
+    idx = 0;
+  } else {
+    idx++;
+  }
+  render();
+}
+
+function goto(i){
+  idx = i;
+  render();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify({idx: idx, wrong: [...wrong]}));
+    toast('进度已保存');
+  }catch(e){
+    toast('保存失败（浏览器限制），建议用发布链接');
+  }
+}
+
+function saveSilent(){
+  try{ localStorage.setItem(KEY, JSON.stringify({idx: idx, wrong: [...wrong]})); }catch(e){}
+}
+
+function load(){
+  try{
+    const s = localStorage.getItem(KEY);
+    if(s){
+      const o = JSON.parse(s);
+      idx = Math.max(0, Math.min(N - 1, o.idx | 0));
+      wrong = new Set(o.wrong || []);
+    }
+  }catch(e){}
+}
+
+function renderWrong(){
+  const box = $('wrongList');
+  if(wrong.size === 0){
+    box.innerHTML = '<div class="empty">还没有错题，棒！</div>';
+    return;
+  }
+  const items = [...wrong].sort((a, b) => a - b);
+  box.innerHTML = items.map(i => {
+    const d = DATA[i];
+    const masked = escapeHtml(maskPhrase(d[1], d[2])).replace(/___/g, '<span class="blank">___</span>');
+    return '<div class="witem" data-i="' + i + '">' +
+      '<span class="wi-no">' + (i + 1) + '</span>' +
+      '<span class="wi-ph">' + masked + '</span>' +
+      '<span class="wi-mn">' + escapeHtml(d[3]) + '</span></div>';
+  }).join('');
+  box.querySelectorAll('.witem').forEach(el => {
+    el.addEventListener('click', () => startPractice([parseInt(el.dataset.i, 10)]));
+  });
+}
+
+function startPractice(list){
+  if(!list || list.length === 0){ toast('错题本为空，无需练习'); return; }
+  practiceQueue = list.slice();
+  inPractice = true;
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  practiceLoad();
+}
+
+function practiceLoad(){
+  idx = practiceQueue[0];
+  render();
+}
+
+function practiceAfterCorrect(){
+  practiceQueue.shift();
+  renderWrong();
+  if(practiceQueue.length === 0){
+    inPractice = false;
+    render();
+    toast('🎉 全部答对，错题本已清空！');
+    document.querySelector('.wrong').scrollIntoView({behavior: 'smooth'});
+  } else {
+    practiceLoad();
+  }
+}
+
+function exitPractice(){
+  inPractice = false;
+  render();
+  renderWrong();
+  document.querySelector('.wrong').scrollIntoView({behavior: 'smooth'});
+}
+
+let toastTimer;
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 1800);
+}
+
+// init
+$('total').textContent = N;
+load();
+render();
+renderWrong();
+$('check').addEventListener('click', check);
+$('prev').addEventListener('click', prev);
+$('next').addEventListener('click', next);
+$('save').addEventListener('click', save);
+$('clearWrong').addEventListener('click', () => { wrong.clear(); saveSilent(); renderWrong(); toast('已清空错题本'); });
+$('goStart').addEventListener('click', () => { idx = 0; render(); window.scrollTo({top:0,behavior:'smooth'}); });
+$('practiceAll').addEventListener('click', () => { startPractice([...wrong].sort((a, b) => a - b)); });
+$('practiceBack').addEventListener('click', exitPractice);
+$('ans').addEventListener('keydown', e => { if(e.key === 'Enter') check(); });
+</script>
+</body>
+</html>

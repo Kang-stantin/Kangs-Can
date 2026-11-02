@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>离线图像马赛克工具</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #d9dce1;
+    --text: #1f2329;
+    --muted: #6b7280;
+    --accent: #2f6fed;
+    --accent-hover: #2558c7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .mode-check {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    color: var(--text) !important;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .mode-check input { width: auto; }
+  input[type="number"] {
+    width: 100px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  input[type="range"] {
+    width: 180px;
+  }
+  button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    transition: background .15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { background: #b9c2d0; cursor: not-allowed; }
+  button.ghost {
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  button.ghost:hover:not(:disabled) { background: #f0f3f9; }
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop.hover { border-color: var(--accent); background: #f0f5ff; }
+  .drop strong { color: var(--text); }
+  .canvases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 4px;
+  }
+  .canvas-box {
+    flex: 1 1 320px;
+    min-width: 280px;
+  }
+  .canvas-box .cap {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  canvas {
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background:
+      repeating-conic-gradient(#eef0f3 0% 25%, #ffffff 0% 50%) 50% / 18px 18px;
+    display: block;
+  }
+  /* 拼豆图纸可能远超屏幕宽度：用滚动容器按原尺寸显示，保证每个色号肉眼可读 */
+  .canvas-scroll {
+    overflow: auto;
+    max-height: 72vh;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background:
+      repeating-conic-gradient(#eef0f3 0% 25%, #ffffff 0% 50%) 50% / 18px 18px;
+  }
+  .canvas-scroll canvas {
+    border: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
+  .canvas-scroll canvas.native { max-width: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .hidden { display: none; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>离线图像马赛克工具</h1>
+  <div class="sub">所有处理都在你的浏览器本地完成，图片不会上传到任何服务器。</div>
+
+  <div class="panel">
+    <div id="drop" class="drop">
+      点击选择图片，或将图片拖拽到这里<br>
+      <strong>支持 JPG / PNG / WebP / GIF（首帧）</strong>
+    </div>
+    <input id="file" type="file" accept="image/*" class="hidden">
+  </div>
+
+  <div id="work" class="hidden">
+    <div class="panel">
+      <div class="controls">
+        <div class="field">
+          <label for="size">马赛克大小（像素）</label>
+          <input id="size" type="number" min="1" max="200" value="16" step="1">
+        </div>
+        <div class="field">
+          <label>滑动调节</label>
+          <input id="range" type="range" min="1" max="120" value="16" step="1">
+        </div>
+        <div class="field">
+          <label>拼豆指南模式</label>
+          <label class="mode-check">
+            <input id="beadMode" type="checkbox"> 显示色号 + 拼豆配色
+          </label>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <div class="row">
+            <button id="apply">应用马赛克</button>
+            <button id="reset" class="ghost">重置</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="export" class="ghost" disabled>导出图片</button>
+        </div>
+      </div>
+      <div class="hint">提示：数值越大，方块越粗、马赛克越强。修改数值后点“应用马赛克”即可实时预览。勾选“拼豆指南模式”会把每个方块匹配到最接近的拼豆颜色并标注色号（如 P05=红），同样可导出 PNG。</div>
+    </div>
+
+    <div class="panel">
+      <div class="canvases">
+        <div class="canvas-box">
+          <div class="cap">原图</div>
+          <canvas id="src"></canvas>
+        </div>
+        <div class="canvas-box">
+          <div class="cap" id="outCap">马赛克效果</div>
+          <div class="canvas-scroll">
+            <canvas id="out"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const fileInput = document.getElementById('file');
+  const drop = document.getElementById('drop');
+  const work = document.getElementById('work');
+  const srcCanvas = document.getElementById('src');
+  const outCanvas = document.getElementById('out');
+  const sizeInput = document.getElementById('size');
+  const range = document.getElementById('range');
+  const applyBtn = document.getElementById('apply');
+  const resetBtn = document.getElementById('reset');
+  const exportBtn = document.getElementById('export');
+  const beadMode = document.getElementById('beadMode');
+  const outCap = document.getElementById('outCap');
+
+  // Perler 拼豆标准色卡（编码 + Hex 色值），用于拼豆指南模式
+  const PALETTE = [
+    ['P01','#F1F1F1'],['P02','#E0DEA9'],['P03','#ECD800'],['P04','#ED6120'],
+    ['P05','#F01820'],['P06','#DD669B'],['P07','#604089'],['P08','#2B3F87'],
+    ['P09','#3370C0'],['P10','#1C753E'],['P11','#56BA9F'],['P12','#513931'],
+    ['P17','#8A8D91'],['P18','#2E2F32'],['P20','#8C372C'],['P21','#815D34'],
+    ['P33','#EEBAB2'],['P35','#BC9371'],['P38','#F22A7B'],['P47','#DCE002'],
+    ['P48','#FF7700'],['P49','#019E43'],['P50','#FF3991'],['P52','#5390D1'],
+    ['P53','#76C882'],['P54','#8A72C1'],['P56','#FEF875'],['P57','#F1AA0C'],
+    ['P58','#93C8D4'],['P59','#FF3851'],['P60','#A24B9C'],['P61','#6CBE13'],
+    ['P62','#2B89C6'],['P63','#FF8285'],['P70','#647CBE'],['P75','#BEC696'],
+    ['P79','#F6B3DD'],['P80','#4FAD42'],['P81','#EEE3CF'],['P82','#AD98D4'],
+    ['P83','#E44892'],['P85','#BB7634'],['P88','#A53061'],['P89','#406AE1'],
+    ['P90','#D48437'],['P91','#067C81'],['P92','#4D5156'],['P93','#8297D9'],
+    ['P96','#801922'],['P97','#BDDA01'],['P98','#E4B690'],['P100','#F97E79'],
+    ['P101','#7AAEA2'],['P102','#84B791'],['P103','#CAC033'],['P104','#D7A8A2'],
+    ['P105','#777B81'],['P179','#114938'],['P181','#B3BAB8'],['P182','#AF9FCE'],
+    ['P199','#008F53'],['P200','#0065B1'],['P201','#2F3C55'],['P202','#A9CDD5'],
+    ['P203','#F2AFB7'],['P204','#E1747A'],['P205','#C9A385'],['P206','#94A19D'],
+    ['P207','#4F595A'],['P208','#DEDACE'],['P210','#B1628E'],['P211','#D14337'],
+    ['P212','#D9593A'],['P213','#F5A168'],['P214','#D8E47C'],['P215','#93B0BD'],
+    ['P216','#4AC0D8'],['P217','#00A4AC'],['P218','#047F8A'],['P219','#7F971A'],
+    ['P220','#696E31'],['P239','#C8B693'],['P240','#B3EED5'],['P241','#A3DE6F'],
+    ['P242','#F479B0'],['P243','#503B9C'],['P244','#D25D72'],['P245','#4E56A3'],
+    ['P246','#FD5918'],['P247','#005D57'],['P248','#6F3255'],['P249','#DA8C2C'],
+    ['P250','#7E5446'],['P251','#8C8CA7'],['P252','#4C6388'],['P253','#9AA98E'],
+    ['P254','#EFB79B'],['P255','#CA3B65'],['P256','#CB59B9'],['P257','#714875'],
+    ['P258','#C8C85C'],['P259','#988C8C'],['P260','#14313B'],['P261','#392928'],
+    ['P262','#5E6D7B'],['P263','#BED4A6'],['P265','#C685B1'],['P266','#6CC8AD'],
+    ['P267','#CDB7C3'],['P268','#DEBA0B'],['P269','#F6D901'],['P272','#FF9A8B'],
+    ['P273','#FC9574'],['P274','#F6CA69'],['P275','#0090AC'],['P276','#F8C7C9'],
+    ['P961','#9D2B3A']
+  ].map(([code, hex]) => {
+    const n = parseInt(hex.slice(1), 16);
+    return { code, hex, r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  });
+
+  function nearestBead(r, g, b) {
+    let best = PALETTE[0], bestD = Infinity;
+    for (let i = 0; i < PALETTE.length; i++) {
+      const c = PALETTE[i];
+      const d = (c.r - r) ** 2 + (c.g - g) ** 2 + (c.b - b) ** 2;
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    return best;
+  }
+
+  const srcCtx = srcCanvas.getContext('2d');
+  const outCtx = outCanvas.getContext('2d');
+  let originalImage = null;
+
+  // 打开文件选择
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  // 拖拽
+  ['dragenter', 'dragover'].forEach(ev =>
+    drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('hover'); }));
+  ['dragleave', 'drop'].forEach(ev =>
+    drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('hover'); }));
+  drop.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  function loadFile(file) {
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        originalImage = img;
+        drawSource();
+        work.classList.remove('hidden');
+        applyMosaic();
+      };
+      img.onerror = () => alert('图片加载失败，请换一张试试');
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 显示原图（限制最大显示尺寸，保持比例）
+  function drawSource() {
+    const maxW = 460;
+    const scale = Math.min(1, maxW / originalImage.width);
+    const w = Math.round(originalImage.width * scale);
+    const h = Math.round(originalImage.height * scale);
+    srcCanvas.width = w; srcCanvas.height = h;
+    outCanvas.width = w; outCanvas.height = h;
+    srcCtx.drawImage(originalImage, 0, 0, w, h);
+  }
+
+  // 核心：马赛克处理 / 拼豆指南模式
+  function applyMosaic() {
+    if (!originalImage) return;
+    let block = parseInt(sizeInput.value, 10);
+    if (!block || block < 1) block = 1;
+    sizeInput.value = block;
+    range.value = Math.min(block, parseInt(range.max, 10));
+
+    // 显示尺寸（最大 460px 宽），并据此确定方格数
+    const maxW = 460;
+    const scale = Math.min(1, maxW / originalImage.width);
+    const dispW = Math.round(originalImage.width * scale);
+    const dispH = Math.round(originalImage.height * scale);
+    const gridW = Math.max(1, Math.floor(dispW / block));
+    const gridH = Math.max(1, Math.floor(dispH / block));
+
+    // 缩小到 (gridW × gridH) 的临时画布，每像素即一个方格的代表色
+    const tmp = document.createElement('canvas');
+    tmp.width = gridW; tmp.height = gridH;
+    const tctx = tmp.getContext('2d');
+    tctx.imageSmoothingEnabled = true;
+    tctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height, 0, 0, gridW, gridH);
+    const data = tctx.getImageData(0, 0, gridW, gridH).data;
+
+    if (beadMode.checked) {
+      // 拼豆指南模式：每格量化到最接近的拼豆色，并标注色号
+      const SANS = '-apple-system, "Microsoft YaHei", sans-serif';
+      const FONT_MIN = 13;   // 最小可读字号，宁可图大也不让字糊
+      const PAD = 7;         // 色号左右各留的空白
+
+      // 1) 先按最小字号测出「最长色号」的实际宽度，再反推每格要做多大
+      //    这样任何编码（如 P268）都一定能完整落在自己的格子里，不会溢出遮挡
+      outCtx.font = FONT_MIN + 'px ' + SANS;
+      let maxCodeW = 0;
+      for (let i = 0; i < PALETTE.length; i++) {
+        const tw = outCtx.measureText(PALETTE[i].code).width;
+        if (tw > maxCodeW) maxCodeW = tw;
+      }
+      let cellPx = Math.ceil(maxCodeW) + PAD * 2;
+      let fontPx = FONT_MIN;
+
+      // 2) 若整张图偏小，则整体等比放大（只放大，不缩小），保证画面饱满
+      const MIN_OUT = 1000;
+      if (gridW * cellPx < MIN_OUT) {
+        const k = MIN_OUT / (gridW * cellPx);
+        cellPx = Math.ceil(cellPx * k);
+        fontPx = Math.max(FONT_MIN, Math.round(FONT_MIN * k));
+      }
+
+      // 3) 最终校验：确认最大色号宽度仍小于格子可用宽度，否则微调字号
+      outCtx.font = fontPx + 'px ' + SANS;
+      let realW = 0;
+      for (let i = 0; i < PALETTE.length; i++) {
+        const tw = outCtx.measureText(PALETTE[i].code).width;
+        if (tw > realW) realW = tw;
+      }
+      if (realW > cellPx - PAD) {
+        fontPx = Math.max(FONT_MIN, Math.floor(fontPx * (cellPx - PAD) / realW));
+      }
+
+      // 不再限制每格上限，格子密度越高，输出的图纸图就越大，优先保证清晰
+      outCanvas.width = gridW * cellPx;
+      outCanvas.height = gridH * cellPx;
+      outCtx.fillStyle = '#ffffff';
+      outCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+      outCtx.font = fontPx + 'px ' + SANS;
+      outCtx.textAlign = 'center';
+      outCtx.textBaseline = 'middle';
+      outCtx.lineJoin = 'round';
+      outCtx.lineWidth = Math.max(2, fontPx * 0.28);
+      for (let y = 0; y < gridH; y++) {
+        for (let x = 0; x < gridW; x++) {
+          const i = (y * gridW + x) * 4;
+          const bead = nearestBead(data[i], data[i + 1], data[i + 2]);
+          outCtx.fillStyle = bead.hex;
+          outCtx.fillRect(x * cellPx, y * cellPx, cellPx, cellPx);
+          // 依据【实际填充的拼豆色】亮度决定文字深浅，保证对比度
+          const lum = 0.299 * bead.r + 0.587 * bead.g + 0.114 * bead.b;
+          const cx = x * cellPx + cellPx / 2, cy = y * cellPx + cellPx / 2;
+          outCtx.strokeStyle = lum < 140 ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.85)';
+          outCtx.strokeText(bead.code, cx, cy);
+          outCtx.fillStyle = lum < 140 ? '#ffffff' : '#222222';
+          outCtx.fillText(bead.code, cx, cy);
+        }
+      }
+      const tooBig = outCanvas.width > 16000 || outCanvas.height > 16000;
+      outCap.textContent = '拼豆图纸（每格标注色号）· 输出 ' +
+        outCanvas.width + '×' + outCanvas.height + 'px' +
+        (tooBig ? ' · 尺寸较大，导出可能较慢' : '') +
+        ' · 可滚动查看';
+      outCanvas.classList.add('native'); // 按原尺寸显示，不被压缩
+    } else {
+      // 普通马赛克模式：最近邻放大成方块
+      outCanvas.width = dispW; outCanvas.height = dispH;
+      outCanvas.classList.remove('native');
+      outCtx.imageSmoothingEnabled = false;
+      outCtx.clearRect(0, 0, dispW, dispH);
+      outCtx.drawImage(tmp, 0, 0, gridW, gridH, 0, 0, dispW, dispH);
+      outCap.textContent = '马赛克效果';
+    }
+    exportBtn.disabled = false;
+  }
+
+  sizeInput.addEventListener('input', () => {
+    const v = parseInt(sizeInput.value, 10);
+    if (!isNaN(v)) range.value = Math.min(v, parseInt(range.max, 10));
+  });
+  range.addEventListener('input', () => { sizeInput.value = range.value; applyMosaic(); });
+  applyBtn.addEventListener('click', applyMosaic);
+  beadMode.addEventListener('change', () => {
+    resetBtn.disabled = beadMode.checked;
+    applyMosaic();
+  });
+  resetBtn.addEventListener('click', () => {
+    if (originalImage && !beadMode.checked) {
+      outCtx.imageSmoothingEnabled = true;
+      outCtx.drawImage(originalImage, 0, 0, outCanvas.width, outCanvas.height);
+    }
+  });
+
+  exportBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    const prefix = beadMode.checked ? 'bead_guide_' : 'mosaic_';
+    link.download = prefix + Date.now() + '.png';
+    link.href = outCanvas.toDataURL('image/png');
+    link.click();
+  });
+})();
+</script>
+</body>
+</html>

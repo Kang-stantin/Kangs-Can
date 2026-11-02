@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Python 入门练习场</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #555555;
+    --panel: #f5f5f5;
+    --border: #d9d9d9;
+    --accent: #1565c0;
+    --accent-dark: #0d47a1;
+    --error: #c62828;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Microsoft YaHei", "微软雅黑", -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    height: 100%;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 2px solid var(--accent);
+    background: #fff;
+  }
+  header h1 { font-size: 20px; margin: 0; font-weight: 700; letter-spacing: 1px; }
+  header .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  #status {
+    font-size: 13px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); color: var(--muted); white-space: nowrap;
+  }
+  #status.ready { color: var(--ok); border-color: var(--ok); }
+  #status.loading { color: var(--accent); border-color: var(--accent); }
+
+  .container { display: flex; height: calc(100vh - 70px); }
+
+  /* 左侧课程列表 */
+  .sidebar {
+    width: 250px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    overflow-y: auto; background: #fafafa;
+  }
+  .sidebar h2 { font-size: 14px; margin: 14px 16px 8px; color: var(--muted); letter-spacing: 1px; }
+  .lesson-item {
+    padding: 10px 16px; cursor: pointer; border-left: 4px solid transparent;
+    font-size: 14px; line-height: 1.4;
+  }
+  .lesson-item:hover { background: #eef4fb; }
+  .lesson-item.active { background: #e3f0ff; border-left-color: var(--accent); font-weight: 600; }
+
+  /* 右侧主区域 */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .toolbar {
+    display: flex; gap: 10px; padding: 10px 16px; align-items: center;
+    border-bottom: 1px solid var(--border); background: #fff; flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit; font-size: 14px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    padding: 8px 16px; border-radius: 6px; font-weight: 600;
+  }
+  button:hover { background: var(--accent-dark); }
+  button.ghost { background: #fff; color: var(--accent); }
+  button.ghost:hover { background: #eef4fb; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .hint { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  /* 课程说明 */
+  .lesson-panel {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: #fafcff; overflow-y: auto; max-height: 38%;
+  }
+  .lesson-panel h3 { margin: 0 0 8px; font-size: 17px; color: var(--accent-dark); }
+  .lesson-panel p { margin: 6px 0; line-height: 1.7; }
+  .lesson-panel code {
+    background: #eef0f2; padding: 1px 6px; border-radius: 4px;
+    font-family: Consolas, "Courier New", monospace; font-size: 14px;
+  }
+  .lesson-panel .exercise {
+    margin-top: 10px; padding: 10px 12px; background: #fff8e1;
+    border-left: 4px solid #f9a825; border-radius: 4px; line-height: 1.7;
+  }
+  .lesson-panel .exercise b { color: #e65100; }
+  .run-ex { margin-top: 10px; }
+
+  /* 编辑器 */
+  .editor-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  textarea#code {
+    flex: 1; width: 100%; border: none; outline: none; resize: none;
+    padding: 14px 16px; font-family: Consolas, "Courier New", monospace;
+    font-size: 15px; line-height: 1.6; color: var(--text); background: #fcfcfc;
+    tab-size: 4;
+  }
+  .io-label {
+    font-size: 13px; color: var(--muted); padding: 4px 16px 0;
+    border-top: 1px dashed var(--border);
+  }
+  textarea#input {
+    width: 100%; border: none; outline: none; resize: none;
+    padding: 6px 16px 10px; font-family: Consolas, monospace; font-size: 14px;
+    color: var(--text); background: #fcfcfc; height: 64px;
+  }
+
+  /* 输出 */
+  .output-wrap {
+    height: 32%; border-top: 2px solid var(--accent); display: flex; flex-direction: column;
+    background: #f5f5f5; overflow: hidden;
+  }
+  .output-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 16px; font-size: 13px; color: var(--muted); font-weight: 600;
+  }
+  pre#output {
+    margin: 0; padding: 4px 16px 14px; overflow-y: auto; flex: 1;
+    font-family: Consolas, "Courier New", monospace; font-size: 14px;
+    line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word;
+  }
+  pre#output .err { color: var(--error); }
+
+  footer { font-size: 12px; color: var(--muted); padding: 6px 16px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Python 入门练习场</h1>
+    <div class="sub">在浏览器里写 Python，点一下就能看结果 · 从零开始的中文课程</div>
+  </div>
+  <div id="status" class="loading">Python 加载中…</div>
+</header>
+
+<div class="container">
+  <aside class="sidebar">
+    <h2>课程目录</h2>
+    <div id="lessonList"></div>
+  </aside>
+
+  <section class="main">
+    <div class="toolbar">
+      <button id="runBtn" disabled>▶ 运行 (Ctrl+Enter)</button>
+      <button id="clearOutBtn" class="ghost">清空输出</button>
+      <button id="clearCodeBtn" class="ghost">清空代码</button>
+      <span class="hint">提示：需要输入的程序，把内容写在下方“程序输入”框里，一行一个</span>
+    </div>
+
+    <div class="lesson-panel" id="lessonPanel">
+      <h3 id="lessonTitle">欢迎使用！</h3>
+      <div id="lessonDesc">
+        <p>这是一个完全在浏览器里运行的 Python 学习环境。左边是课程，点任意一节就会把示例代码放进下面的编辑框。</p>
+        <p>把代码改一改，再点 <b>运行</b>，右边就会显示结果。出了错也没关系，红色字会告诉你哪里不对。</p>
+        <p>建议从第一节「第一个程序」开始，一节一节往下学。</p>
+      </div>
+      <div class="exercise" id="lessonExercise" style="display:none;"></div>
+      <button class="run-ex ghost" id="loadExBtn">把示例代码放进编辑器</button>
+    </div>
+
+    <div class="editor-wrap">
+      <textarea id="code" spellcheck="false" placeholder="在这里写 Python 代码…"></textarea>
+      <div class="io-label">程序输入（用 input() 时才需要，一行一个）：</div>
+      <textarea id="input" spellcheck="false" placeholder="例如：&#10;小明&#10;16"></textarea>
+    </div>
+
+    <div class="output-wrap">
+      <div class="output-head"><span>运行结果</span><span id="runTime"></span></div>
+      <pre id="output">（运行后这里会显示输出）</pre>
+    </div>
+  </section>
+</div>
+
+<footer>小提示：第一次打开需要联网加载 Python 内核（之后浏览器会缓存）。本工具不会把你的代码发到任何服务器。</footer>
+
+<script>
+// ---------- 课程数据 ----------
+const lessons = [
+  {
+    title: "1. 第一个程序",
+    desc: "<p>学编程第一步，就是让电脑「说句话」。Python 用 <code>print()</code> 把内容显示在屏幕上。</p><p>括号里可以放文字（用引号包起来），也可以同时放好几样东西，用逗号隔开。</p>",
+    code:
+'print("你好，世界！")\n' +
+'print("我是小明，", "今年", 12, "岁")',
+    exercise: "<b>练一练：</b>把程序改成打印出你自己的名字，和一句你喜欢的口号（比如「我爱学 Python」）。"
+  },
+  {
+    title: "2. 变量：给数据起名字",
+    desc: "<p>变量就像一个贴了标签的盒子，把数据存进去，以后用名字就能拿出来。Python 不用事先声明类型，直接 <code>名字 = 值</code> 就行。</p><p>常见类型：文字叫<b>字符串</b>（引号包住）、整数 <code>12</code>、小数 <code>1.55</code>、真假 <code>True/False</code>。</p>",
+    code:
+'name = "小明"\n' +
+'age = 12\n' +
+'height = 1.55\n' +
+'print(name, "今年", age, "岁，身高", height, "米")',
+    exercise: "<b>练一练：</b>定义几个变量保存你喜欢的颜色、一个数字，然后用 print 把它们连成一句话打印出来。"
+  },
+  {
+    title: "3. 数字与运算",
+    desc: "<p>Python 能直接做算术：<code>+</code> 加、<code>-</code> 减、<code>*</code> 乘、<code>/</code> 除、<code>%</code> 取余数、<code>**</code> 乘方、<code>//</code> 整除（只留整数）。</p>",
+    code:
+'a = 7\n' +
+'b = 3\n' +
+'print("加法:", a + b)\n' +
+'print("乘法:", a * b)\n' +
+'print("除法:", a / b)\n' +
+'print("取余数:", a % b)\n' +
+'print("7 的平方:", a ** 2)\n' +
+'print("整除:", a // b)',
+    exercise: "<b>练一练：</b>用变量存一个长方形的长和宽，算出并打印它的面积（长 × 宽）和周长。"
+  },
+  {
+    title: "4. 字符串（文字）",
+    desc: "<p>用引号包起来的就是字符串。可以用 <code>+</code> 把两段文字拼起来。最方便的写法是 <b>f 字符串</b>：在字符串前加 <code>f</code>，里面用 <code>{变量}</code> 直接塞进内容。</p>",
+    code:
+'name = "小红"\n' +
+'age = 10\n' +
+'print(f"{name} 明年就 {age + 1} 岁了")\n' +
+'city = "北京"\n' +
+'print(city + " 欢迎你")',
+    exercise: "<b>练一练：</b>用 f 字符串打印一句自我介绍，比如「我叫 XX，今年 XX 岁，喜欢 XX」。"
+  },
+  {
+    title: "5. 让程序听你说话：input()",
+    desc: "<p><code>input(\"提示语\")</code> 会停下来等你输入，回车后把输入的内容作为<b>字符串</b>返回。如果要把它当数字用，记得用 <code>int()</code> 转成整数。</p><p>本环境里，把要输入的内容写在下方「程序输入」框，一行一个。</p>",
+    code:
+'name = input("你叫什么名字？")\n' +
+'print("你好呀，", name, "！")\n' +
+'age = int(input("你几岁了？"))\n' +
+'print("明年你就", age + 1, "岁啦")',
+    input: "小明\n16",
+    exercise: "<b>练一练：</b>问用户最喜欢的数字，把它加 10 后打印出来（记得 int 转换）。"
+  },
+  {
+    title: "6. 条件判断 if",
+    desc: "<p>程序经常要「看情况办事」。<code>if 条件:</code> 成立就做；<code>elif 条件:</code> 否则再判断；<code>else:</code> 其他情况。注意<b>冒号</b>和<b>缩进</b>（下面一行要空 4 格）！</p>",
+    code:
+'age = int(input("请输入你的年龄："))\n' +
+'if age >= 18:\n' +
+'    print("你已经成年啦")\n' +
+'else:\n' +
+'    print("你还未成年")',
+    input: "16",
+    exercise: "<b>练一练：</b>输入一个数字，判断它是奇数还是偶数（偶数能被 2 整除：<code>数字 % 2 == 0</code>）。"
+  },
+  {
+    title: "7. for 循环：重复做一件事",
+    desc: "<p><code>for i in range(5):</code> 会把括号里的内容重复 5 次，<code>i</code> 依次是 0、1、2、3、4。<code>range(1, 6)</code> 则是从 1 到 5。</p>",
+    code:
+'for i in range(1, 6):\n' +
+'    print("第", i, "次：你好")',
+    exercise: "<b>练一练：</b>用 for 循环打印出 1 到 10 每个数字的平方（提示：<code>i * i</code>）。"
+  },
+  {
+    title: "8. while 循环：条件成立就一直做",
+    desc: "<p><code>while 条件:</code> 只要条件成立，就反复执行。一定要在循环里改变条件，否则会「死循环」停不下来！</p>",
+    code:
+'total = 0\n' +
+'count = 1\n' +
+'while count <= 100:\n' +
+'    total = total + count\n' +
+'    count = count + 1\n' +
+'print("1 到 100 的和是", total)',
+    exercise: "<b>练一练：</b>用 while 计算 2 + 4 + 6 + … + 20（所有偶数）的和。"
+  },
+  {
+    title: "9. 列表 list：装一组东西",
+    desc: "<p>列表用 <code>[ ]</code> 装多个数据，比如 <code>nums = [1, 2, 3]</code>。用 <code>nums[0]</code> 取第一个（记住从 0 数起）。<code>len(列表)</code> 求长度，<code>列表.append(东西)</code> 往里加。</p>",
+    code:
+'fruits = ["苹果", "香蕉", "橙子"]\n' +
+'fruits.append("葡萄")\n' +
+'print("我有", len(fruits), "种水果：")\n' +
+'for f in fruits:\n' +
+'    print(" -", f)',
+    exercise: "<b>练一练：</b>建一个你喜欢的游戏或电影名字的列表，用 for 循环把它们一个个打印出来。"
+  },
+  {
+    title: "10. 函数 def：把代码打包复用",
+    desc: "<p>函数把一段代码打包，取个名字，以后随时调用。<code>def 名字(参数):</code> 下面缩进写内容，用 <code>return</code> 把结果交回来。</p>",
+    code:
+'def add(a, b):\n' +
+'    return a + b\n' +
+'\n' +
+'print("3 + 5 =", add(3, 5))\n' +
+'print("10 + 20 =", add(10, 20))',
+    exercise: "<b>练一练：</b>写一个函数 <code>max2(a, b)</code>，返回两个数里较大的那个，并调用它测试几组数据。"
+  },
+  {
+    title: "11. 综合小项目：猜数字游戏",
+    desc: "<p>把前面学的串起来！下面这个游戏想好了一个数，你来猜，它提示「大了 / 小了」，直到猜中。实战中可以用 <code>random.randint(1, 100)</code> 随机生成答案（这里为了演示先固定成 42）。</p>",
+    code:
+'# 猜数字小游戏\n' +
+'answer = 42  # 实战可用 random.randint(1, 100) 随机生成\n' +
+'print("我想好了一个 1 到 100 之间的数，来猜猜看！")\n' +
+'while True:\n' +
+'    guess = int(input("你的猜测："))\n' +
+'    if guess > answer:\n' +
+'        print("太大了，再小一点")\n' +
+'    elif guess < answer:\n' +
+'        print("太小了，再大一点")\n' +
+'    else:\n' +
+'        print("恭喜你，猜对了！")\n' +
+'        break',
+    input: "20\n60\n42",
+    exercise: "<b>挑战：</b>把答案改成用 <code>import random; answer = random.randint(1, 100)</code> 随机生成；或者改造这个游戏，做成「加法出题器」（随机出加法题让你算）。"
+  }
+];
+
+// ---------- 界面逻辑 ----------
+const codeEl = document.getElementById("code");
+const inputEl = document.getElementById("input");
+const outputEl = document.getElementById("output");
+const statusEl = document.getElementById("status");
+const runBtn = document.getElementById("runBtn");
+const lessonListEl = document.getElementById("lessonList");
+const lessonTitleEl = document.getElementById("lessonTitle");
+const lessonDescEl = document.getElementById("lessonDesc");
+const lessonExerciseEl = document.getElementById("lessonExercise");
+const loadExBtn = document.getElementById("loadExBtn");
+const runTimeEl = document.getElementById("runTime");
+
+let currentLesson = null;
+
+// 渲染课程列表
+lessons.forEach((les, i) => {
+  const div = document.createElement("div");
+  div.className = "lesson-item";
+  div.textContent = les.title;
+  div.onclick = () => selectLesson(i, div);
+  lessonListEl.appendChild(div);
+});
+
+function selectLesson(i, el) {
+  currentLesson = lessons[i];
+  document.querySelectorAll(".lesson-item").forEach(n => n.classList.remove("active"));
+  if (el) el.classList.add("active");
+  lessonTitleEl.textContent = currentLesson.title;
+  lessonDescEl.innerHTML = currentLesson.desc;
+  if (currentLesson.exercise) {
+    lessonExerciseEl.style.display = "block";
+    lessonExerciseEl.innerHTML = currentLesson.exercise;
+  } else {
+    lessonExerciseEl.style.display = "none";
+  }
+  loadExBtn.style.display = "inline-block";
+  loadExBtn.textContent = "把示例代码放进编辑器";
+}
+
+loadExBtn.onclick = () => {
+  if (!currentLesson) return;
+  codeEl.value = currentLesson.code;
+  inputEl.value = currentLesson.input || "";
+  outputEl.textContent = "（代码示例已载入，点 ▶ 运行 看看效果）";
+  outputEl.classList.remove("err");
+};
+
+document.getElementById("clearOutBtn").onclick = () => {
+  outputEl.textContent = "（已清空）";
+  outputEl.classList.remove("err");
+  runTimeEl.textContent = "";
+};
+document.getElementById("clearCodeBtn").onclick = () => {
+  codeEl.value = "";
+  inputEl.value = "";
+  codeEl.focus();
+};
+
+// Tab 键插入四个空格
+codeEl.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const s = codeEl.selectionStart, en = codeEl.selectionEnd;
+    codeEl.value = codeEl.value.slice(0, s) + "    " + codeEl.value.slice(en);
+    codeEl.selectionStart = codeEl.selectionEnd = s + 4;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    runCode();
+  }
+});
+
+// ---------- Python 运行环境（Pyodide） ----------
+let pyodide = null;
+let pyodideReady = false;
+let inputQueue = [];
+
+globalThis.getNextInput = function () {
+  return inputQueue.length ? inputQueue.shift() : null;
+};
+
+async function initPyodide() {
+  try {
+    pyodide = await loadPyodide();
+    await pyodide.runPythonAsync(
+      "import builtins, sys\n" +
+      "from js import getNextInput\n" +
+      "def _input(prompt=''):\n" +
+      "    if prompt:\n" +
+      "        sys.stdout.write(str(prompt))\n" +
+      "        sys.stdout.flush()\n" +
+      "    line = getNextInput()\n" +
+      "    if line is None:\n" +
+      "        raise EOFError('input() 没收到输入，请在“程序输入”框里填一行内容')\n" +
+      "    return line\n" +
+      "builtins.input = _input\n"
+    );
+    pyodideReady = true;
+    statusEl.textContent = "已就绪";
+    statusEl.className = "ready";
+    runBtn.disabled = false;
+  } catch (err) {
+    statusEl.textContent = "加载失败，请检查网络";
+    statusEl.className = "loading";
+    outputEl.textContent = "Python 内核加载失败：" + err + "\n请确认电脑能联网（首次需从网络加载），然后刷新页面重试。";
+    outputEl.classList.add("err");
+  }
+}
+
+function appendOutput(text, isError) {
+  if (isError) {
+    outputEl.classList.add("err");
+    outputEl.textContent += text;
+  } else {
+    outputEl.textContent += text;
+  }
+}
+
+async function runCode() {
+  if (!pyodideReady) {
+    outputEl.textContent = "Python 环境还在加载，请稍候…";
+    outputEl.classList.add("err");
+    return;
+  }
+  const code = codeEl.value;
+  outputEl.textContent = "";
+  outputEl.classList.remove("err");
+  // 准备输入队列
+  inputQueue = inputEl.value.split("\n").map(s => s.replace(/\r$/, ""));
+  // 设定输出捕获
+  pyodide.setStdout({ batched: (s) => appendOutput(s, false) });
+  pyodide.setStderr({ batched: (s) => appendOutput(s, true) });
+
+  const t0 = performance.now();
+  try {
+    await pyodide.runPythonAsync(code);
+    const ms = (performance.now() - t0).toFixed(0);
+    runTimeEl.textContent = "用时 " + ms + " 毫秒";
+  } catch (err) {
+    const ms = (performance.now() - t0).toFixed(0);
+    appendOutput("\n" + String(err.message || err), true);
+    runTimeEl.textContent = "用时 " + ms + " 毫秒";
+  }
+}
+
+runBtn.onclick = runCode;
+
+// 启动
+initPyodide();
+</script>
+</body>
+</html>
